@@ -22,46 +22,47 @@ if (!fs.existsSync(pathToCopyMedia)){
   fs.mkdirSync(pathToCopyMedia); 
 }
 
-glob(pathToMedia + '/**/*', function(err, files) {
+glob(pathToMedia + '/**/*', {'nodir': true}, function(err, files) {
   files.forEach(function(file) {
     var pathToCopyFile = pathToCopyMedia + file.replace(pathToMedia, '');
-    if (fs.lstatSync(file).isDirectory() && !fs.existsSync(pathToCopyFile)) {
-      fs.mkdirSync(pathToCopyFile);
-    } else {
-      //todo create white list of image files
-      if(extensions.every(function(regex){return !file.match(regex);})) {
+    pathToCopyFile.split('/').slice(0, -1).reduce(function(prev, curr, i) {
+      if (fs.existsSync(prev) === false) {
+        fs.mkdirSync(prev);
+      }
+      return prev + '/' + curr;
+    });
+
+    if(extensions.every(function(regex){return !file.match(regex);})) {
+      fs.createWriteStream(pathToCopyFile);
+      return;
+    }
+
+    lwip.open(file, function(err, image) {
+      if (err) {
+        console.error(err);
         fs.createWriteStream(pathToCopyFile);
         return;
       }
-      lwip.open(file, function(err, image) {
-        if (err) {
 
-          console.error(err)
-          fs.createWriteStream(pathToCopyFile);
-          return;
-        }
+      var width = image.width(),
+        height = image.height();
+      if (!images.hasOwnProperty(width)) {
+        images[width] = {};
+      }
+      if (!images[width].hasOwnProperty(height)) {
+        images[width][height] = [];
+      }
 
-        var width = image.width(),
-          height = image.height();
-        if (!images.hasOwnProperty(width)) {
-          images[width] = {};
-        }
-        if (!images[width].hasOwnProperty(height)) {
-          images[width][height] = [];
-        }
-
-
-        if (images[width][height].length < sampleSize) {
-          images[width][height].push(file);
-          // Create new image file in new folder
-          fs.createWriteStream(pathToCopyFile);
-        } else {
-          // Create symlink in new folder
-          var randomIndex = Math.floor(images[width][height].length * Math.random());
-          var randomImage = images[width][height][randomIndex];
-          fs.symlink(pathToCopyMedia + randomImage.replace(pathToMedia, ''), pathToCopyFile);
-        }
-      });
-    }
+      if (images[width][height].length < sampleSize) {
+        images[width][height].push(file);
+        // Create new image file in new folder
+        fs.createWriteStream(pathToCopyFile);
+      } else {
+        // Create symlink in new folder
+        var randomIndex = Math.floor(images[width][height].length * Math.random());
+        var randomImage = images[width][height][randomIndex];
+        fs.symlink(pathToCopyMedia + randomImage.replace(pathToMedia, ''), pathToCopyFile);
+      }
+    });
   });
 });
