@@ -1,4 +1,5 @@
-var fs = require('fs');
+var fs = require('fs-sync');
+var node_fs = require('fs');
 var glob = require('glob');
 var lwip = require('lwip');
 var async = require('async');
@@ -21,8 +22,8 @@ var extensions = [
   '.gif'
 ];
 
-if (!fs.existsSync(copyMediaDir)){
-  fs.mkdirSync(copyMediaDir);
+if (!fs.exists(copyMediaDir)){
+  fs.mkdir(copyMediaDir);
 }
 
 glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
@@ -30,20 +31,19 @@ glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
     var copyFile = copyMediaDir + file.replace(mediaDir, '');
     var copyFileDir = copyMediaDir + path.dirname(file).replace(mediaDir, '');
 
-    if (!fs.existsSync(copyFileDir)) {
-      mkdirp.sync(copyFileDir);
+    // While 'fs-sync' is awesome, this is still necessary for image.writeFile
+    if (!fs.exists(copyFileDir)) {
+      fs.mkdir(copyFileDir);
     }
 
     if (!extensions.some(function(ext){return ext == path.extname(file);})) {
-      fs.createWriteStream(copyFile);
+      fs.copy(file, copyFile);
       return callback(null);
     }
 
     lwip.open(file, function(err, image) {
       if (err) {
-        console.error(err);
-        fs.createWriteStream(copyFile);
-        return;
+        return console.error(err);
       }
 
       var width = image.width(),
@@ -56,16 +56,22 @@ glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
       }
 
       if (images[width][height].length < sampleSize) {
-        images[width][height].push(copyFile);
-        // Create new image file in new folder
-        fs.createWriteStream(copyFile);
+        // Copy image
+        image.writeFile(copyFile, function(err) {
+          if (!err) {
+            images[width][height].push(copyFile);
+          }
+          callback(null);
+        });
       } else {
-        // Create symlink in new folder
+        // Create symlink to random previously copied image
         var randomIndex = Math.floor(images[width][height].length * Math.random());
         var randomImage = images[width][height][randomIndex];
-        fs.symlink(randomImage, copyFile);
+        // TODO: ensure relative symlinks
+        node_fs.symlink(randomImage, copyFile, function(err) {
+          callback(null);
+        });
       }
     });
-    callback(null);
   });
 });

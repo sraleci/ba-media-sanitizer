@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "async": "^1.5.2",
+    "fs-sync": "^1.0.1",
     "glob": "^6.0.4",
     "lwip": "0.0.8",
     "mkdirp": "^0.5.1",
