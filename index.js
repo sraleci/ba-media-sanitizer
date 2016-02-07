@@ -5,10 +5,10 @@ var async = require('async');
 var mkdirp = require('mkdirp');
 var path = require('path');
 
-var pathToMedia = process.argv[2];
-var pathToCopyMedia = process.argv[3];
+var mediaDir = process.argv[2];
+var copyMediaDir = process.argv[3];
 
-if (!pathToMedia || !pathToCopyMedia) {
+if (!mediaDir || !copyMediaDir) {
   console.error("Must provide arguments for existing media directory and target location.");
 }
 
@@ -21,28 +21,28 @@ var extensions = [
   '.gif'
 ];
 
-if (!fs.existsSync(pathToCopyMedia)){
-  fs.mkdirSync(pathToCopyMedia);
+if (!fs.existsSync(copyMediaDir)){
+  fs.mkdirSync(copyMediaDir);
 }
 
-glob(pathToMedia + '/**/*', {nodir: true}, function(err, files) {
+glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
   async.each(files, function(file, callback) {
-    var pathToCopyFile = pathToCopyMedia + file.replace(pathToMedia, '');
-    var pathToCopyDir = pathToCopyMedia + path.dirname(file).replace(pathToMedia, '');
+    var copyFile = copyMediaDir + file.replace(mediaDir, '');
+    var copyFileDir = copyMediaDir + path.dirname(file).replace(mediaDir, '');
 
-    if (!fs.existsSync(pathToCopyDir)) {
-      mkdirp.sync(pathToCopyDir);
+    if (!fs.existsSync(copyFileDir)) {
+      mkdirp.sync(copyFileDir);
     }
 
     if (!extensions.some(function(ext){return ext == path.extname(file);})) {
-      fs.createWriteStream(pathToCopyFile);
+      fs.createWriteStream(copyFile);
       return callback(null);
     }
 
     lwip.open(file, function(err, image) {
       if (err) {
         console.error(err);
-        fs.createWriteStream(pathToCopyFile);
+        fs.createWriteStream(copyFile);
         return;
       }
 
@@ -56,14 +56,14 @@ glob(pathToMedia + '/**/*', {nodir: true}, function(err, files) {
       }
 
       if (images[width][height].length < sampleSize) {
-        images[width][height].push(pathToCopyFile);
+        images[width][height].push(copyFile);
         // Create new image file in new folder
-        fs.createWriteStream(pathToCopyFile);
+        fs.createWriteStream(copyFile);
       } else {
         // Create symlink in new folder
         var randomIndex = Math.floor(images[width][height].length * Math.random());
         var randomImage = images[width][height][randomIndex];
-        fs.symlink(randomImage, pathToCopyFile);
+        fs.symlink(randomImage, copyFile);
       }
     });
     callback(null);
