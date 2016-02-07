@@ -32,7 +32,7 @@ glob(pathToMedia + '/**/*', {'nodir': true}, function(err, files) {
       return prev + '/' + curr;
     });
 
-    if(extensions.every(function(regex){return !file.match(regex);})) {
+    if(!extensions.some(function(regex){return file.match(regex);})) {
       fs.createWriteStream(pathToCopyFile);
       return;
     }
