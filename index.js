@@ -2,6 +2,8 @@ var fs = require('fs');
 var glob = require('glob');
 var lwip = require('lwip');
 var async = require('async');
+var mkdirp = require('mkdirp');
+var path = require('path');
 
 var pathToMedia = process.argv[2];
 var pathToCopyMedia = process.argv[3];
@@ -13,27 +15,26 @@ if (!pathToMedia || !pathToCopyMedia) {
 var sampleSize = 10;
 var images = {};
 var extensions = [
-  /.*\.png/i,
-  /.*\.jpg/i,
-  /.*\.jpeg/i,
-  /.*\.gif/i
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif'
 ];
 
 if (!fs.existsSync(pathToCopyMedia)){
-  fs.mkdirSync(pathToCopyMedia); 
+  fs.mkdirSync(pathToCopyMedia);
 }
 
-glob(pathToMedia + '/**/*', {'nodir': true}, function(err, files) {
+glob(pathToMedia + '/**/*', {nodir: true}, function(err, files) {
   async.each(files, function(file, callback) {
     var pathToCopyFile = pathToCopyMedia + file.replace(pathToMedia, '');
-    pathToCopyFile.split('/').slice(0, -1).reduce(function(prev, curr, i) {
-      if (fs.existsSync(prev) === false) {
-        fs.mkdirSync(prev);
-      }
-      return prev + '/' + curr;
-    });
+    var pathToCopyDir = pathToCopyMedia + path.dirname(file).replace(pathToMedia, '');
 
-    if(!extensions.some(function(regex){return file.match(regex);})) {
+    if (!fs.existsSync(pathToCopyDir)) {
+      mkdirp.sync(pathToCopyDir);
+    }
+
+    if (!extensions.some(function(ext){return ext == path.extname(file);})) {
       fs.createWriteStream(pathToCopyFile);
       return callback(null);
     }
