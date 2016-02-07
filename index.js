@@ -15,11 +15,14 @@ if (!mediaDir || !copyMediaDir) {
 
 var sampleSize = 10;
 var images = {};
-var extensions = [
+var imgExtensions = [
   '.png',
   '.jpg',
   '.jpeg',
   '.gif'
+];
+var blacklistExtensions = [
+  '.css'
 ];
 
 if (!fs.exists(copyMediaDir)){
@@ -31,12 +34,17 @@ glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
     var copyFile = copyMediaDir + file.replace(mediaDir, '');
     var copyFileDir = copyMediaDir + path.dirname(file).replace(mediaDir, '');
 
+    // Skip blacklisted items
+    if (blacklistExtensions.some(function(ext){return ext == path.extname(file);})) {
+      return callback(null);
+    }
+
     // While 'fs-sync' is awesome, this is still necessary for image.writeFile
     if (!fs.exists(copyFileDir)) {
       fs.mkdir(copyFileDir);
     }
 
-    if (!extensions.some(function(ext){return ext == path.extname(file);})) {
+    if (!imgExtensions.some(function(ext){return ext == path.extname(file);})) {
       fs.copy(file, copyFile);
       return callback(null);
     }
