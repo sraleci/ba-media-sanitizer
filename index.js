@@ -56,14 +56,14 @@ glob(pathToMedia + '/**/*', {nodir: true}, function(err, files) {
       }
 
       if (images[width][height].length < sampleSize) {
-        images[width][height].push(file);
+        images[width][height].push(pathToCopyFile);
         // Create new image file in new folder
         fs.createWriteStream(pathToCopyFile);
       } else {
         // Create symlink in new folder
         var randomIndex = Math.floor(images[width][height].length * Math.random());
         var randomImage = images[width][height][randomIndex];
-        fs.symlink(pathToCopyMedia + randomImage.replace(pathToMedia, ''), pathToCopyFile);
+        fs.symlink(randomImage, pathToCopyFile);
       }
     });
     callback(null);
