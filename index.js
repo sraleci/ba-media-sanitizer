@@ -1,6 +1,7 @@
 var fs = require('fs');
 var glob = require('glob');
 var lwip = require('lwip');
+var async = require('async');
 
 var pathToMedia = process.argv[2];
 var pathToCopyMedia = process.argv[3];
@@ -23,7 +24,7 @@ if (!fs.existsSync(pathToCopyMedia)){
 }
 
 glob(pathToMedia + '/**/*', {'nodir': true}, function(err, files) {
-  files.forEach(function(file) {
+  async.each(files, function(file, callback) {
     var pathToCopyFile = pathToCopyMedia + file.replace(pathToMedia, '');
     pathToCopyFile.split('/').slice(0, -1).reduce(function(prev, curr, i) {
       if (fs.existsSync(prev) === false) {
@@ -34,7 +35,7 @@ glob(pathToMedia + '/**/*', {'nodir': true}, function(err, files) {
 
     if(!extensions.some(function(regex){return file.match(regex);})) {
       fs.createWriteStream(pathToCopyFile);
-      return;
+      return callback(null);
     }
 
     lwip.open(file, function(err, image) {
@@ -64,5 +65,6 @@ glob(pathToMedia + '/**/*', {'nodir': true}, function(err, files) {
         fs.symlink(pathToCopyMedia + randomImage.replace(pathToMedia, ''), pathToCopyFile);
       }
     });
+    callback(null);
   });
 });
