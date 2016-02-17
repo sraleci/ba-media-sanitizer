@@ -20,7 +20,7 @@ var imgExtensions = [
   '.gif'
 ];
 var blacklistExtensions = [
-  '.css'
+//  '.css'
 ];
 
 if (!fsSync.exists(copyMediaDir)){
@@ -64,7 +64,7 @@ glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
 
       if (images[width][height].length < sampleSize) {
         // Copy image
-        images[width][height].push(copyFile)
+        images[width][height].push(copyFile);
         fsSync.copy(file, copyFile);
       } else {
         // Create symlink to random previously copied image
