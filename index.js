@@ -2,7 +2,6 @@ var fs = require('fs-sync');
 var node_fs = require('fs');
 var glob = require('glob');
 var lwip = require('lwip');
-var async = require('async');
 var mkdirp = require('mkdirp');
 var path = require('path');
 
@@ -30,13 +29,13 @@ if (!fs.exists(copyMediaDir)){
 }
 
 glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
-  async.each(files, function(file, callback) {
+  files.forEach(function(file) {
     var copyFile = copyMediaDir + file.replace(mediaDir, '');
     var copyFileDir = copyMediaDir + path.dirname(file).replace(mediaDir, '');
 
     // Skip blacklisted items
     if (blacklistExtensions.some(function(ext){return ext == path.extname(file);})) {
-      return callback(null);
+      return;
     }
 
     // While 'fs-sync' is awesome, this is still necessary for image.writeFile
@@ -46,7 +45,7 @@ glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
 
     if (!imgExtensions.some(function(ext){return ext == path.extname(file);})) {
       fs.copy(file, copyFile);
-      return callback(null);
+      return;
     }
 
     lwip.open(file, function(err, image) {
@@ -69,7 +68,6 @@ glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
           if (!err) {
             images[width][height].push(copyFile);
           }
-          callback(null);
         });
       } else {
         // Create symlink to random previously copied image
