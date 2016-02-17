@@ -1,15 +1,14 @@
-var fs = require('fs-sync');
-var node_fs = require('fs');
+var fsSync = require('fs-sync');
+var fs = require('fs');
 var glob = require('glob');
 var lwip = require('lwip');
-var mkdirp = require('mkdirp');
 var path = require('path');
 
 var mediaDir = process.argv[2];
 var copyMediaDir = process.argv[3];
 
 if (!mediaDir || !copyMediaDir) {
-  console.error("Must provide arguments for existing media directory and target location.");
+  throw new Error("Must provide arguments for existing media directory and target location.");
 }
 
 var sampleSize = 10;
@@ -24,8 +23,8 @@ var blacklistExtensions = [
   '.css'
 ];
 
-if (!fs.exists(copyMediaDir)){
-  fs.mkdir(copyMediaDir);
+if (!fsSync.exists(copyMediaDir)){
+  fsSync.mkdir(copyMediaDir);
 }
 
 glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
@@ -39,12 +38,13 @@ glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
     }
 
     // While 'fs-sync' is awesome, this is still necessary for image.writeFile
-    if (!fs.exists(copyFileDir)) {
-      fs.mkdir(copyFileDir);
+    if (!fsSync.exists(copyFileDir)) {
+      fsSync.mkdir(copyFileDir);
     }
 
+    // If the file is not an image file, just copy it
     if (!imgExtensions.some(function(ext){return ext == path.extname(file);})) {
-      fs.copy(file, copyFile);
+      fsSync.copy(file, copyFile);
       return;
     }
 
@@ -54,7 +54,7 @@ glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
       }
 
       var width = image.width(),
-        height = image.height();
+          height = image.height();
       if (!images.hasOwnProperty(width)) {
         images[width] = {};
       }
@@ -64,19 +64,14 @@ glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
 
       if (images[width][height].length < sampleSize) {
         // Copy image
-        image.writeFile(copyFile, function(err) {
-          if (!err) {
-            images[width][height].push(copyFile);
-          }
-        });
+        fsSync.copy(file, copyFile);
       } else {
         // Create symlink to random previously copied image
-        var randomIndex = Math.floor(images[width][height].length * Math.random());
-        var randomImage = images[width][height][randomIndex];
+        var randomIndex = Math.floor(images[width][height].length * Math.random()),
+            randomImage = images[width][height][randomIndex];
+
         // TODO: ensure relative symlinks
-        node_fs.symlink(randomImage, copyFile, function(err) {
-          callback(null);
-        });
+        fs.symlink(randomImage, copyFile);
       }
     });
   });
