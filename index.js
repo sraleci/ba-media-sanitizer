@@ -67,12 +67,11 @@ glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
         images[width][height].push(copyFile);
         fsSync.copy(file, copyFile);
       } else {
-        // Create symlink to random previously copied image
+        // Create link to random previously copied image
         var randomIndex = Math.floor(images[width][height].length * Math.random()),
             randomImage = images[width][height][randomIndex];
 
-        // TODO: ensure relative symlinks
-        fs.symlink(randomImage, copyFile);
+        fs.link(randomImage, copyFile);
       }
     });
   });
