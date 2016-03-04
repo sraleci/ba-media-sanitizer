@@ -3,15 +3,26 @@ var fs = require('fs');
 var glob = require('glob');
 var lwip = require('lwip');
 var path = require('path');
+var commandLineArguments = require('command-line-args');
 
-var mediaDir = process.argv[2];
-var copyMediaDir = process.argv[3];
+var options = commandLineArguments([
+  {name: 'verbose', alias: 'v', type: Boolean},
+  {name: 'batchsize', alias: 'b', type: Number},
+  {name: 'samplesize', alias: 's', type: Number},
+  {name: 'files', type: String, multiple: true, defaultOption: true}
+]).parse();
+
+var mediaDir = options.files[0],
+    copyMediaDir = options.files[1];
 
 if (!mediaDir || !copyMediaDir) {
   throw new Error("Must provide arguments for existing media directory and target location.");
 }
 
-var sampleSize = 10;
+var sampleSize = options.samplesize || 10,
+    batchSize = options.batchsize || 100,
+    verbose = options.verbose;
+
 var images = {};
 var imgExtensions = [
   '.png',
@@ -34,6 +45,7 @@ glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
 
     // Skip blacklisted items
     if (blacklistExtensions.some(function(ext){return ext == path.extname(file);})) {
+      if (verbose) console.log("Skipping file because its extension is blacklisted: " + file);
       return;
     }
 
@@ -45,6 +57,7 @@ glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
     // If the file is not an image file, just copy it
     if (!imgExtensions.some(function(ext){return ext == path.extname(file);})) {
       fsSync.copy(file, copyFile);
+      if (verbose) console.log("Copying non-image file: " + file + " to " + copyFile);
       return;
     }
 
@@ -66,12 +79,14 @@ glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
         // Copy image
         images[width][height].push(copyFile);
         fsSync.copy(file, copyFile);
+        if (verbose) console.log("Copying image file: " + file + " to " + copyFile);
       } else {
         // Create link to random previously copied image
         var randomIndex = Math.floor(images[width][height].length * Math.random()),
             randomImage = images[width][height][randomIndex];
 
         fs.link(randomImage, copyFile);
+        if (verbose) console.log("Linking image file: " + randomImage + " to " + copyFile)
       }
     });
   });
