@@ -32,7 +32,13 @@ var imgExtensions = [
 ];
 var blacklistExtensions = [
   '.mp3',
-  '.pdf'
+  '.pdf',
+  '.js',
+  '.css',
+  '.txt',
+  '.info',
+  '.csv',
+  '.swp'
 ];
 
 if (!fsSync.exists(copyMediaDir)){
