@@ -31,11 +31,16 @@ var imgExtensions = [
   '.gif'
 ];
 var blacklistExtensions = [
-//  '.css'
+  '.mp3',
+  '.pdf'
 ];
 
 if (!fsSync.exists(copyMediaDir)){
   fsSync.mkdir(copyMediaDir);
+}
+
+var calculateAspectRation = function(width, height) {
+  return (height == 0) ? width : calculateAspectRation(height, width%height);
 }
 
 glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
@@ -68,6 +73,12 @@ glob(mediaDir + '/**/*', {nodir: true}, function(err, files) {
 
       var width = image.width(),
           height = image.height();
+
+      var aspectRation = calculateAspectRation(width, height);
+
+      width = width/aspectRation;
+      height = height/aspectRation;
+
       if (!images.hasOwnProperty(width)) {
         images[width] = {};
       }
