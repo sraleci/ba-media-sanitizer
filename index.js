@@ -1,5 +1,5 @@
 var fsSync = require('fs-sync');
-var fs = require('fs');
+var fs = require('fs-extra');
 var glob = require('glob');
 var lwip = require('lwip');
 var path = require('path');
@@ -40,7 +40,8 @@ var blacklistExtensions = [
   '.csv',
   '.swp',
   '.xml',
-  '.html'
+  '.html',
+  '.c'
 ];
 
 if (!fsSync.exists(copyMediaDir)){
