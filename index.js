@@ -38,7 +38,9 @@ var blacklistExtensions = [
   '.txt',
   '.info',
   '.csv',
-  '.swp'
+  '.swp',
+  '.xml',
+  '.html'
 ];
 
 if (!fsSync.exists(copyMediaDir)){
